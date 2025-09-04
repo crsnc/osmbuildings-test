@@ -1,445 +1,286 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Otel Harita Uygulaması</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://cdn.osmbuildings.org/5.3.0/OSMBuildings-Leaflet.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            overflow: hidden;
-        }
-        
-        #map {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        
-        .control-panel {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 600px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            padding: 15px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        
-        .search-container {
-            display: flex;
-            gap: 10px;
-        }
-        
-        #search-input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        
-        #search-input:focus {
-            border-color: #4a90e2;
-            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-        }
-        
-        #search-button {
-            padding: 12px 20px;
-            background: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s;
-        }
-        
-        #search-button:hover {
-            background: #3a7bc8;
-        }
-        
-        .controls-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .language-selector {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        #language-toggle {
-            padding: 8px 12px;
-            background: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-        
-        #language-toggle:hover {
-            background: #e0e0e0;
-        }
-        
-        #toggle-3d {
-            padding: 8px 16px;
-            background: #5b5b5b;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.3s;
-        }
-        
-        #toggle-3d:hover {
-            background: #4a4a4a;
-        }
-        
-        .search-results {
-            position: absolute;
-            top: calc(100% + 5px);
-            left: 0;
-            width: 100%;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-            z-index: 1001;
-        }
-        
-        .search-result-item {
-            padding: 10px 15px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .search-result-item:hover {
-            background: #f5f5f5;
-        }
-        
-        .hotel-marker {
-            width: 30px;
-            height: 30px;
-            background: #e74c3c;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        .custom-popup {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 5px;
-        }
-        
-        .custom-popup h3 {
-            margin: 0 0 5px 0;
-            color: #2c3e50;
-        }
-        
-        .custom-popup p {
-            margin: 0;
-            color: #7f8c8d;
-        }
-        
-        .map-overlay {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            font-size: 14px;
-            color: #333;
-        }
-        
-        .attribution {
-            position: absolute;
-            bottom: 5px;
-            left: 5px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 3px 5px;
-            border-radius: 3px;
-            font-size: 10px;
-            z-index: 1000;
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Misafir – Indoor & Outdoor Harita</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.2.4/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol@v9.2.4/dist/ol.js"></script>
+  <link href="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.css" rel="stylesheet">
+  <script src="https://cdn.osmbuildings.org/4.1.1/OSMBuildings.js"></script>
+
+  <style>
+    :root{ --shadow:0 8px 24px rgba(0,0,0,.16); --muted:#6b7280; --bg:#ffffff }
+    html,body{height:100%;margin:0}
+    body{font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f3f4f6}
+    #map{position:fixed; inset:0}
+
+    /* Attribution küçük ve sade (lisansa uygun) */
+    .ol-attribution{font-size:10px; opacity:.85}
+    .ol-attribution button{display:none}
+
+    /* Alt panel (tek yerde tüm kontroller) */
+    .panel{position:fixed; left:50%; bottom:12px; transform:translateX(-50%);
+           width:min(780px,96vw); z-index:1000;}
+    .card{background:var(--bg); border:1px solid #e5e7eb; border-radius:14px; box-shadow:var(--shadow)}
+    .p-8{padding:12px}
+    .row{display:flex; align-items:center; gap:8px}
+    .stack{display:flex; flex-direction:column; gap:8px}
+    .grow{flex:1 1 auto}
+    input[type="search"]{width:100%; padding:12px; border:1px solid #e5e7eb; border-radius:10px}
+    button,.btn{padding:10px 12px; border:1px solid #e5e7eb; background:#f8fafc; border-radius:10px; cursor:pointer}
+    button:active{transform:translateY(1px)}
+    button:disabled{opacity:.55; cursor:not-allowed}
+    select{padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e5e7eb; border-radius:999px; background:#fff}
+    .pill input{accent-color:#1d4ed8}
+    .muted{color:var(--muted)}
+
+    /* Arama sonuçları */
+    .results{background:#fff; border:1px solid #e5e7eb; border-radius:10px; max-height:36vh; overflow:auto; display:none}
+    .results .item{padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; gap:8px}
+    .results .item small{color:var(--muted)}
+    .results .item:hover{background:#f1f5f9}
+    .results .hint{padding:8px 12px; color:var(--muted); font-size:12px; pointer-events:none}
+
+    /* Yönerge kutusu */
+    .dir{display:none; background:#fff; border:1px solid #e5e7eb; border-radius:10px}
+    .dir .hdr{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid #e5e7eb}
+    .dir .sum{font-weight:600}
+    .dir .list{max-height:30vh; overflow:auto; padding:8px 12px}
+    .step{display:flex; gap:8px; padding:6px 0; border-bottom:1px dashed #e5e7eb}
+    .step:last-child{border-bottom:none}
+
+    /* Popup */
+    .ol-popup{position:absolute; background:#fff; padding:10px; border-radius:10px; border:1px solid #e5e7eb; min-width:220px; box-shadow:var(--shadow); transform:translate(-50%,-100%); }
+    .ol-popup-closer{position:absolute; right:8px; top:6px; text-decoration:none; color:#9ca3af}
+    .badge{display:inline-block; padding:.15rem .45rem; border-radius:999px; background:#eef2ff; border:1px solid #dfe6ff; font-size:12px}
+
+    /* Konum doğruluk rozeti: SAĞ ALTA */
+    .acc{position:fixed; right:12px; bottom:12px; z-index:1000; background:#fff; border:1px solid #e5e7eb; border-radius:999px; padding:6px 10px; font-size:12px; box-shadow:var(--shadow)}
+
+    /* 3D Kontrolü */
+    .toggle-3d {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 1000;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    
+    .toggle-3d.active {
+      background: #e0e7ff;
+      border-color: #c7d2fe;
+    }
+
+    @media (max-width:520px){ .panel{bottom:8px} }
+  </style>
 </head>
 <body>
-    <div id="map"></div>
-    
-    <div class="control-panel">
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Otel veya yer ara...">
-            <button id="search-button">Ara</button>
-            <div class="search-results" id="search-results"></div>
+
+  <!-- 3D Kontrolü -->
+  <div id="toggle3d" class="toggle-3d">
+    <span>3D: Kapalı</span>
+  </div>
+
+  <!-- Tek panel -->
+  <div class="panel">
+    <div class="card p-8 stack">
+      <div class="row">
+        <input id="q" class="grow" type="search" placeholder="Ara: restoran, spa, havuz…" />
+        <button id="go" disabled>Git</button>
+        <select id="lang" aria-label="Language">
+          <option value="tr" selected>TR</option>
+          <option value="en">EN</option>
+          <option value="ru">RU</option>
+          <option value="de">DE</option>
+          <option value="pl">PL</option>
+        </select>
+      </div>
+      <div class="row" style="flex-wrap:wrap">
+        <button id="pick">Haritadan Hedef</button>
+        <button id="follow">🎯 İzle: Kapalı</button>
+        <button id="toggleDetails">Detaylar: Kapalı</button>
+        <label class="pill"><input type="checkbox" id="tglIndoor" checked>Indoor</label>
+        <label class="pill"><input type="checkbox" id="tglOutdoor" checked>Outdoor</label>
+        <button id="reset">Sıfırla</button>
+        <span class="muted" id="hint" style="display:none">🔎 Arama açık</span>
+      </div>
+      <div id="results" class="results"></div>
+      <div id="dir" class="dir">
+        <div class="hdr">
+          <div><span class="sum" id="dirSum">–</span> <span class="muted" id="dirSub"></span></div>
+          <div class="row">
+            <button id="collapseDir">▲</button>
+            <button id="clearRoute">Rota Temizle</button>
+          </div>
         </div>
-        <div class="controls-container">
-            <div class="language-selector">
-                <span>Dil:</span>
-                <button id="language-toggle">Türkçe</button>
-            </div>
-            <button id="toggle-3d">3D Haritayı Aç</button>
-        </div>
+        <div class="list" id="dirList"></div>
+      </div>
+      <div class="muted" style="font-size:11px; text-align:right">© aihotelstech · © OpenStreetMap contributors</div>
     </div>
+  </div>
+
+  <!-- Konum doğruluk rozeti -->
+  <div id="acc" class="acc" style="display:none"></div>
+
+  <!-- Popup -->
+  <div id="popup" class="ol-popup" style="display:none">
+    <a href="#" id="popup-closer" class="ol-popup-closer">✕</a>
+    <div id="popup-content"></div>
+  </div>
+
+  <div id="map" aria-label="Harita"></div>
+
+<script>
+// ========= OpenLayers Base =========
+const base = new ol.layer.Tile({
+  source: new ol.source.OSM({
+    attributions: '© aihotelstech · © OpenStreetMap contributors'
+  })
+});
+
+const indoorSource  = new ol.source.Vector();
+const outdoorSource = new ol.source.Vector();
+
+const indoorLayer  = new ol.layer.VectorImage({ source: indoorSource });
+const outdoorLayer = new ol.layer.VectorImage({ source: outdoorSource });
+
+const map = new ol.Map({
+  target:'map',
+  layers:[base, indoorLayer, outdoorLayer],
+  view:new ol.View({
+    center: ol.proj.fromLonLat([31.8046,36.6002]),
+    zoom:16,
+    rotation:0
+  })
+});
+
+map.addControl(new ol.control.Attribution({collapsible:false}));
+map.addControl(new ol.control.Rotate());
+
+// ========= OSMBuildings =========
+let osmb = null;
+let is3dMode = false;
+
+// 3D modunu değiştirme fonksiyonu
+function toggle3dMode() {
+  is3dMode = !is3dMode;
+  
+  const toggleButton = document.getElementById('toggle3d');
+  
+  if (is3dMode) {
+    // 3D modu aç
+    if (!osmb) {
+      osmb = new OSMBuildings({ 
+        baseURL: 'https://cdn.osmbuildings.org/4.1.1/',
+        minZoom: 15,
+        position: { 
+          latitude: 36.6002, 
+          longitude: 31.8046 
+        }
+      });
+      
+      osmb.addMapTiles('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+      osmb.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
+      
+      // Harita div'ine ekle
+      const mapDiv = document.getElementById('map');
+      osmb.appendTo(mapDiv);
+      
+      // OL → OSMBuildings senkronizasyonu
+      const view = map.getView();
+      
+      function syncOSMB() {
+        if (!osmb) return;
+        
+        const center = ol.proj.toLonLat(view.getCenter());
+        osmb.setPosition({ 
+          latitude: center[1], 
+          longitude: center[0] 
+        });
+        osmb.setZoom(view.getZoom());
+        osmb.setRotation(view.getRotation());
+      }
+      
+      // İlk senkronizasyon
+      syncOSMB();
+      
+      // View değişince güncelle
+      view.on('change:center', syncOSMB);
+      view.on('change:zoom', syncOSMB);
+      view.on('change:rotation', syncOSMB);
+    } else {
+      osmb.show();
+    }
     
-    <div class="map-overlay" id="location-info">Konum: Yükleniyor...</div>
-    <div class="attribution">© OpenStreetMap, OSMBuildings</div>
+    toggleButton.classList.add('active');
+    toggleButton.innerHTML = '<span>3D: Açık</span>';
+  } else {
+    // 3D modu kapat
+    if (osmb) {
+      osmb.hide();
+    }
+    
+    toggleButton.classList.remove('active');
+    toggleButton.innerHTML = '<span>3D: Kapalı</span>';
+  }
+}
 
-    <script>
-        // Dil desteği için çeviriler
-        const translations = {
-            tr: {
-                searchPlaceholder: "Otel veya yer ara...",
-                searchButton: "Ara",
-                languageButton: "Türkçe",
-                toggle3D: "3D Haritayı Aç",
-                toggle2D: "2D Haritaya Dön",
-                language: "Dil:",
-                location: "Konum:",
-                noResults: "Sonuç bulunamadı",
-                loading: "Yükleniyor...",
-                hotel: "Otel"
-            },
-            en: {
-                searchPlaceholder: "Search for hotel or place...",
-                searchButton: "Search",
-                languageButton: "English",
-                toggle3D: "Enable 3D Map",
-                toggle2D: "Switch to 2D",
-                language: "Language:",
-                location: "Location:",
-                noResults: "No results found",
-                loading: "Loading...",
-                hotel: "Hotel"
-            }
-        };
+// 3D düğmesine tıklama olayını ekle
+document.getElementById('toggle3d').addEventListener('click', toggle3dMode);
 
-        // Mevcut dil
-        let currentLanguage = 'tr';
-        
-        // Harita ve OSMBuildings nesneleri
-        let map;
-        let osmb;
-        let is3DMode = false;
-        
-        // Örnek otel verileri (gerçek uygulamada API'den çekilecek)
-        const sampleHotels = [
-            { id: 1, name: "Lüks Otel", lat: 41.0082, lon: 28.9784, address: "Sultanahmet, İstanbul" },
-            { id: 2, name: "Sahil Resort", lat: 41.0351, lon: 29.0133, address: "Bebek, İstanbul" },
-            { id: 3, name: "Business Hotel", lat: 41.0830, lon: 29.0502, address: "Maslak, İstanbul" }
-        ];
-        
-        // Haritayı başlatma
-        function initMap() {
-            // İstanbul'da merkezlenmiş harita
-            map = L.map('map').setView([41.0082, 28.9784], 14);
-            
-            // OpenStreetMap katmanı
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-            
-            // OSMBuildings katmanı (başlangıçta gizli)
-            osmb = new OSMBuildings(map).hide();
-            
-            // Konum bilgisi güncelleme
-            map.on('move', updateLocationInfo);
-            updateLocationInfo();
-            
-            // Örnek otelleri haritaya ekle
-            addHotelsToMap();
-            
-            // Arama kutusu için olay dinleyicileri
-            setupEventListeners();
-            
-            // Dil değiştirme butonu
-            document.getElementById('language-toggle').addEventListener('click', toggleLanguage);
-            
-            // 3D modu değiştirme butonu
-            document.getElementById('toggle-3d').addEventListener('click', toggle3DMode);
-        }
-        
-        // Örnek otelleri haritaya ekleme
-        function addHotelsToMap() {
-            sampleHotels.forEach(hotel => {
-                // Özel bir marker oluştur
-                const hotelIcon = L.divIcon({
-                    className: 'hotel-marker',
-                    iconSize: [30, 30]
-                });
-                
-                // Marker'ı haritaya ekle
-                const marker = L.marker([hotel.lat, hotel.lon], { icon: hotelIcon }).addTo(map);
-                
-                // Popup içeriği
-                marker.bindPopup(`
-                    <div class="custom-popup">
-                        <h3>${hotel.name}</h3>
-                        <p>${hotel.address}</p>
-                        <p>${translations[currentLanguage].hotel}</p>
-                    </div>
-                `);
-            });
-        }
-        
-        // Konum bilgisini güncelleme
-        function updateLocationInfo() {
-            const center = map.getCenter();
-            const zoom = map.getZoom();
-            document.getElementById('location-info').textContent = 
-                `${translations[currentLanguage].location} ${center.lat.toFixed(4)}, ${center.lng.toFixed(4)} | Zoom: ${zoom}`;
-        }
-        
-        // Arama işlevselliği
-        function setupEventListeners() {
-            const searchInput = document.getElementById('search-input');
-            const searchButton = document.getElementById('search-button');
-            const searchResults = document.getElementById('search-results');
-            
-            // Arama butonuna tıklama
-            searchButton.addEventListener('click', performSearch);
-            
-            // Enter tuşu ile arama
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    performSearch();
-                }
-            });
-            
-            // Arama yapma fonksiyonu
-            function performSearch() {
-                const query = searchInput.value.trim();
-                if (query.length < 2) return;
-                
-                // Arama sonuçları alanını temizle ve göster
-                searchResults.innerHTML = '';
-                searchResults.style.display = 'block';
-                
-                // Yükleniyor mesajı
-                const loadingItem = document.createElement('div');
-                loadingItem.className = 'search-result-item';
-                loadingItem.textContent = translations[currentLanguage].loading;
-                searchResults.appendChild(loadingItem);
-                
-                // Nominatim API ile arama (OpenStreetMap)
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
-                    .then(response => response.json())
-                    .then(data => {
-                        // Önceki içeriği temizle
-                        searchResults.innerHTML = '';
-                        
-                        if (data.length === 0) {
-                            const noResults = document.createElement('div');
-                            noResults.className = 'search-result-item';
-                            noResults.textContent = translations[currentLanguage].noResults;
-                            searchResults.appendChild(noResults);
-                            return;
-                        }
-                        
-                        // Sonuçları listele
-                        data.forEach(result => {
-                            const item = document.createElement('div');
-                            item.className = 'search-result-item';
-                            item.textContent = result.display_name;
-                            item.addEventListener('click', () => {
-                                // Haritayı seçilen konuma taşı
-                                map.setView([result.lat, result.lon], 16);
-                                searchResults.style.display = 'none';
-                                searchInput.value = result.display_name;
-                            });
-                            searchResults.appendChild(item);
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Arama hatası:', error);
-                        searchResults.innerHTML = '';
-                        
-                        const errorItem = document.createElement('div');
-                        errorItem.className = 'search-result-item';
-                        errorItem.textContent = 'Arama sırasında hata oluştu';
-                        searchResults.appendChild(errorItem);
-                    });
-            }
-            
-            // Arama kutusu dışına tıklandığında sonuçları gizle
-            document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && !searchResults.contains(e.target) && !searchButton.contains(e.target)) {
-                    searchResults.style.display = 'none';
-                }
-            });
-        }
-        
-        // Dil değiştirme fonksiyonu
-        function toggleLanguage() {
-            currentLanguage = currentLanguage === 'tr' ? 'en' : 'tr';
-            updateUILanguage();
-        }
-        
-        // UI dilini güncelleme
-        function updateUILanguage() {
-            document.getElementById('search-input').placeholder = translations[currentLanguage].searchPlaceholder;
-            document.getElementById('search-button').textContent = translations[currentLanguage].searchButton;
-            document.getElementById('language-toggle').textContent = translations[currentLanguage].languageButton;
-            document.querySelector('.language-selector span').textContent = translations[currentLanguage].language;
-            
-            // 3D butonunu güncelle
-            document.getElementById('toggle-3d').textContent = 
-                is3DMode ? translations[currentLanguage].toggle2D : translations[currentLanguage].toggle3D;
-            
-            // Konum bilgisini güncelle
-            updateLocationInfo();
-        }
-        
-        // 3D modunu değiştirme
-        function toggle3DMode() {
-            is3DMode = !is3DMode;
-            
-            if (is3DMode) {
-                // 3D modunu aç
-                osmb.show();
-                document.getElementById('toggle-3d').textContent = 
-                    currentLanguage === 'tr' ? '2D Haritaya Dön' : 'Switch to 2D';
-            } else {
-                // 3D modunu kapat
-                osmb.hide();
-                document.getElementById('toggle-3d').textContent = 
-                    currentLanguage === 'tr' ? '3D Haritayı Aç' : 'Enable 3D Map';
-            }
-        }
-        
-        // Sayfa yüklendiğinde haritayı başlat
-        window.onload = initMap;
-    </script>
+// Harita yüklendikten sonra OSMBuildings'i başlat
+map.once('postrender', function() {
+  // İlk başta 3D mod kapalı, sadece hazırlık yap
+  osmb = new OSMBuildings({ 
+    baseURL: 'https://cdn.osmbuildings.org/4.1.1/',
+    minZoom: 15,
+    position: { 
+      latitude: 36.6002, 
+      longitude: 31.8046 
+    }
+  });
+  
+  osmb.addMapTiles('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+  osmb.addGeoJSONTiles('https://{s}.data.osmbuildings.org/0.2/anonymous/tile/{z}/{x}/{y}.json');
+  
+  // Harita div'ine ekle ve hemen gizle
+  const mapDiv = document.getElementById('map');
+  osmb.appendTo(mapDiv);
+  osmb.hide();
+  
+  // OL → OSMBuildings senkronizasyonu
+  const view = map.getView();
+  
+  function syncOSMB() {
+    if (!osmb) return;
+    
+    const center = ol.proj.toLonLat(view.getCenter());
+    osmb.setPosition({ 
+      latitude: center[1], 
+      longitude: center[0] 
+    });
+    osmb.setZoom(view.getZoom());
+    osmb.setRotation(view.getRotation());
+  }
+  
+  // İlk senkronizasyon
+  syncOSMB();
+  
+  // View değişince güncelle
+  view.on('change:center', syncOSMB);
+  view.on('change:zoom', syncOSMB);
+  view.on('change:rotation', syncOSMB);
+});
+</script>
 </body>
 </html>
