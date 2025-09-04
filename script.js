@@ -9,7 +9,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // 3. OSMBuildings başlat
 var osmb = new OSMBuildings(map).load();
 
-// 4. Otel binası eklemek için GeoJSON örneği
+// 4. Örnek Otel Binası GeoJSON (3D olarak eklenir)
 osmb.addGeoJSON({
   type: "Feature",
   geometry: {
@@ -25,8 +25,36 @@ osmb.addGeoJSON({
     ]
   },
   properties: {
-    height: 20,       // bina yüksekliği metre cinsinden
-    minHeight: 0,     // zemin yüksekliği
-    roofColor: "#ff0000" // çatının rengi
+    height: 20,
+    minHeight: 0,
+    roofColor: "#ff0000",
+    name: "Ana Otel Binası"
   }
+});
+
+// 5. Arama Fonksiyonu (OpenStreetMap / Nominatim API)
+document.getElementById("searchBtn").addEventListener("click", function(){
+  var query = document.getElementById("searchBox").value;
+  if(!query) return;
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+    .then(response => response.json())
+    .then(data => {
+      if(data.length > 0){
+        var place = data[0];
+        var lat = place.lat;
+        var lon = place.lon;
+
+        // Haritada o noktaya git
+        map.setView([lat, lon], 18);
+
+        // Marker ekle
+        L.marker([lat, lon]).addTo(map)
+          .bindPopup(place.display_name)
+          .openPopup();
+      } else {
+        alert("Hiç eşleşme bulunamadı!");
+      }
+    })
+    .catch(err => console.error(err));
 });
