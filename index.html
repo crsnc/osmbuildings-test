@@ -1,92 +1,121 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Otel Haritası 3D</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<title>Otel 3D Harita</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.osmbuildings.org/4.0.0/OSMBuildings.js"></script>
+
 <style>
-  body, html{margin:0;padding:0;height:100%;}
-  #map{width:100%;height:100%;}
-  .panel{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1000;background:#fff;padding:10px;border-radius:10px;box-shadow:0 4px 8px rgba(0,0,0,0.2);}
-  .panel input[type="search"]{padding:6px;width:200px;}
-  .panel button{margin-left:6px;padding:6px;}
+  html, body { margin:0; padding:0; height:100%; }
+  #map { width:100%; height:100%; }
+  .search-panel { position: absolute; top:10px; left:50%; transform: translateX(-50%); z-index:1000;
+                  background:white; padding:10px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.3); }
+  .search-panel input { padding:6px 8px; width:200px; border:1px solid #ccc; border-radius:4px; }
+  .search-panel button { padding:6px 8px; margin-left:4px; }
 </style>
 </head>
 <body>
+
 <div id="map"></div>
 
-<div class="panel">
-  <input id="searchBox" type="search" placeholder="Ara: restoran, spa, havuz…"/>
+<div class="search-panel">
+  <input type="search" id="searchBox" placeholder="Ara: restoran, spa, havuz…">
   <button id="searchBtn">Git</button>
-  <button id="pickBtn">Haritadan Hedef</button>
-  <button id="followBtn">🎯 İzle</button>
 </div>
 
 <script>
-// ===== Resepsiyon koordinatları =====
-const resepsiyon = { lat: 36.6005, lng: 31.8050 };
+  // Başlangıç konumu: Resepsiyon (örnek koordinatlar)
+  const receptionLat = 36.6002;
+  const receptionLon = 31.8046;
 
-// ===== Harita =====
-const map = L.map('map').setView([resepsiyon.lat, resepsiyon.lng], 18);
+  // Leaflet harita
+  const map = L.map('map').setView([receptionLat, receptionLon], 17);
 
-// OpenStreetMap katmanı
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
+  // OpenStreetMap katmanı
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
 
-// ===== OSMBuildings =====
-const osmb = new OSMBuildings(map).load();
+  // OSMBuildings (3D her zaman açık)
+  const osmb = new OSMBuildings({
+      baseURL: 'https://cdn.osmbuildings.org/4.0.0/OSMBuildings',
+      container: 'map',
+      position: { latitude: receptionLat, longitude: receptionLon },
+      zoom: 17,
+      minZoom: 15,
+      maxZoom: 22
+  });
+  osmb.addMapTiles('https://{a,b,c}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+  });
 
-// ===== Kullanıcı konumu =====
-let userMarker = null;
-let following = false;
-function enableFollow() {
-  if(!navigator.geolocation) return alert("Konum bulunamadı.");
-  if(!userMarker){
-    userMarker = L.circleMarker([0,0], {radius:7,color:'#1d4ed8',fillColor:'#1d4ed8',fillOpacity:0.8}).addTo(map);
+  // Marker ve Feature yönetimi
+  let indoorFeatures = [];
+  let outdoorFeatures = [];
+  let markersLayer = L.layerGroup().addTo(map);
+  let destinationMarker = null;
+
+  // Indoor & Outdoor JSON yükle
+  async function loadFeatures() {
+    try {
+      const indoor = await fetch('indoor.json').then(r=>r.json());
+      const outdoor = await fetch('outdoor.json').then(r=>r.json());
+
+      indoorFeatures = L.geoJSON(indoor, {
+        pointToLayer: (feature, latlng) => {
+          return L.circleMarker(latlng, { radius:7, color:'blue', fillColor:'blue', fillOpacity:0.7 });
+        }
+      }).addTo(markersLayer);
+
+      outdoorFeatures = L.geoJSON(outdoor, {
+        pointToLayer: (feature, latlng) => {
+          return L.circleMarker(latlng, { radius:7, color:'green', fillColor:'green', fillOpacity:0.7 });
+        }
+      }).addTo(markersLayer);
+
+    } catch(err) {
+      console.error("JSON yüklenemedi:", err);
+    }
   }
-  following = true;
-  navigator.geolocation.watchPosition(pos=>{
-    const latlng = [pos.coords.latitude, pos.coords.longitude];
-    userMarker.setLatLng(latlng);
-    if(following) map.setView(latlng, map.getZoom());
-  }, err=>{}, {enableHighAccuracy:true});
-}
 
-// ===== Arama ve hedef =====
-const pickBtn = document.getElementById('pickBtn');
-const followBtn = document.getElementById('followBtn');
-const searchBtn = document.getElementById('searchBtn');
-const searchBox = document.getElementById('searchBox');
+  loadFeatures();
 
-let targetMarker = null;
-let pickMode = false;
+  // Arama
+  const searchBox = document.getElementById('searchBox');
+  const searchBtn = document.getElementById('searchBtn');
 
-pickBtn.onclick = ()=>{ pickMode = !pickMode; pickBtn.classList.toggle('active', pickMode); };
-map.on('click', e=>{
-  if(pickMode){
-    if(targetMarker) map.removeLayer(targetMarker);
-    targetMarker = L.marker(e.latlng,{icon:L.icon({iconUrl:'https://cdn-icons-png.flaticon.com/512/684/684908.png',iconSize:[25,25]})}).addTo(map);
-    pickMode=false; pickBtn.classList.remove('active');
+  function normalize(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''); }
+
+  function searchFeature(term){
+    term = normalize(term);
+    let allFeatures = [];
+    indoorFeatures.eachLayer(f => allFeatures.push(f));
+    outdoorFeatures.eachLayer(f => allFeatures.push(f));
+
+    for (let f of allFeatures){
+      let props = f.feature.properties || {};
+      let names = [props.name, props.name_tr, props.name_en].filter(Boolean).map(normalize);
+      if(names.some(n=>n.includes(term))){
+        map.setView(f.getLatLng(), 18);
+        if(destinationMarker) markersLayer.removeLayer(destinationMarker);
+        destinationMarker = L.marker(f.getLatLng(), {icon:L.icon({iconUrl:'https://maps.google.com/mapfiles/ms/icons/red-dot.png', iconSize:[32,32]})}).addTo(markersLayer);
+        break;
+      }
+    }
   }
-});
 
-followBtn.onclick = ()=>{ enableFollow(); };
+  searchBtn.addEventListener('click', ()=>searchFeature(searchBox.value));
+  searchBox.addEventListener('keypress', e=>{ if(e.key==='Enter') searchFeature(searchBox.value); });
 
-// Basit arama: haritada marker göster
-searchBtn.onclick = ()=>{
-  const query = searchBox.value.trim().toLowerCase();
-  if(!query) return alert("Bir şeyler yazın!");
-  // Örnek: resepsiyon için
-  if(query.includes('resepsiyon')){
-    map.setView([resepsiyon.lat, resepsiyon.lng], 18);
-    alert("Resepsiyon bulundu!");
-  }
-  // Daha fazla nokta eklemek istersen burada kontrol ekleyebilirsin
-};
+  // Haritadan hedef seçimi
+  map.on('click', e=>{
+    if(destinationMarker) markersLayer.removeLayer(destinationMarker);
+    destinationMarker = L.marker(e.latlng, {icon:L.icon({iconUrl:'https://maps.google.com/mapfiles/ms/icons/red-dot.png', iconSize:[32,32]})}).addTo(markersLayer);
+  });
 
 </script>
 </body>
